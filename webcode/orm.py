@@ -32,17 +32,18 @@ def destroy_pool():
     if __pool is not None:
         __pool.close()
         yield from __pool.wait_closed()
+
 @asyncio.coroutine
 def select(sql, args, size=None):
     log(sql, args)
     global __pool
-    with (yield from __pool.get()) as conn:
+    with (yield from __pool) as conn:
         cur = yield from conn.cursor(aiomysql.DictCursor)
-        yield from cur.execute(sql, replace('?', '%s'), args or ())
+        yield from cur.execute(sql.replace('?', '%s'), args or ())
         if size:
             rs = yield from cur.fetchmany(size)
         else:
-            rs = cur.fetchall()
+            rs = yield from cur.fetchall()
         yield from cur.close()
         logging.info('rows returned: %s' % len(rs))
         return rs
