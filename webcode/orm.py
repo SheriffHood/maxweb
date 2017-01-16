@@ -67,7 +67,6 @@ def create_args_string(num):
         L.append('?')
     return ', '.join(L)
 
-#Filed类保存数据库表的字段名和字段类型
 class Field(object):
 
     def __init__(self, name, column_type, primary_key, default):
@@ -79,40 +78,32 @@ class Field(object):
     def __str__(self):
         return '<%s, %s:%s>' % (self.__class__.__name__, self.column_type, self.name)
 
-#继承自Field，表示字符串
 class StringField(Field):
     def __init__(self, name=None, primary_key=False, default=None, ddl='varchar(100)'):
         super().__init__(name, ddl, primary_key, default)
 
-#继承自Field，表示布尔值
 class BooleanField(Field):
-    def __init__(self, name=None, default=None):
+    def __init__(self, name=None, default=False):
         super().__init__(name, 'boolean', False, default)
 
-#继承自Field，表示整数值
 class IntegerField(Field):
     def __init__(self, name=None, primary_key=False, default=0):
         super().__init__(name, 'bigint', primary_key, default)
 
-#继承自Field，表示浮点数
 class FloatField(Field):
     def __init__(self, name=None, primary_key=False, default=0.0):
         super().__init__(name, 'real', primary_key, default)
 
-#继承自Field，表示文本值
 class TextField(Field):
     def __init__(self, name=None, default=None):
         super().__init__(name, 'text', False, default)
 
-#元类，知道如何创建类
 class ModelMetaClass(type):
     
     def __new__(cls, name, bases, attrs):
-        #排除对Model的修改
         if name == 'Model':
             return type.__new__(cls, name, bases, attrs)
         
-        #建立映射关系并保存
         tableName = attrs.get('__table__', None) or name
         logging.info('found model: %s (table: %s)' % (name, tableName))
 
@@ -206,7 +197,7 @@ class Model(dict, metaclass=ModelMetaClass):
     @classmethod
     @asyncio.coroutine
     def findNumber(cls, selectField, where=None, args=None):
-        sql = ['select % _num_ from `%s`' % (selectField, cls.__table__)]
+        sql = ['select %s _num_ from `%s`' % (selectField, cls.__table__)]
         if where:
             sql.append('where')
             sql.append(where)
