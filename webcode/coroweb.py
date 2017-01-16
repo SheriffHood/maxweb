@@ -93,7 +93,7 @@ class RequestHandler(object):
             if request.method == 'POST':
                 if not request.content_type:
                     return web.HTTPBadRequest('Missing Content-Type.')
-                ct = request.content_type_lower()
+                ct = request.content_type.lower()
                 if ct.startswith('application/json'):
                     params = yield from request.json()
                     if not isinstance(params, dict):
@@ -113,9 +113,9 @@ class RequestHandler(object):
         if kw is None:
             kw = dict(**request.match_info)
         else:
-            if not self._has_var_kw_arg() and self._named_kw.arg():
+            if not self._has_var_kw_arg and self._named_kw_arg:
                 copy = dict()
-                for name in self._name_kw_arg:
+                for name in self._named_kw_arg:
                     if name in kw:
                         copy[name] = kw[name]
                 kw = copy
