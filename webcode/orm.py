@@ -132,7 +132,6 @@ class ModelMetaClass(type):
         attrs['__primary_key__'] = primaryKey
         attrs['__fields__'] = fields
 
-        #构造SQL语句
         attrs['__select__'] = 'select `%s`, %s from `%s`' % (primaryKey, ', '.join(escaped_fields), tableName)
         attrs['__insert__'] = 'insert into `%s` (%s, `%s`) values (%s)' % (tableName, ', '.join(escaped_fields), primaryKey, create_args_string(len(escaped_fields) + 1))
         attrs['__update__'] = 'update `%s` set %s where `%s=?' % (tableName, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primaryKey)
@@ -170,6 +169,7 @@ class Model(dict, metaclass=ModelMetaClass):
     @classmethod
     @asyncio.coroutine
     def findAll(cls, where=None, args=None, **kw):
+        'find object by where clause'
         sql = [cls.__select__]
         if where:
             sql.append('where')
@@ -197,6 +197,7 @@ class Model(dict, metaclass=ModelMetaClass):
     @classmethod
     @asyncio.coroutine
     def findNumber(cls, selectField, where=None, args=None):
+        'find a number by select and where'
         sql = ['select %s _num_ from `%s`' % (selectField, cls.__table__)]
         if where:
             sql.append('where')
@@ -210,6 +211,7 @@ class Model(dict, metaclass=ModelMetaClass):
     @classmethod
     @asyncio.coroutine
     def find(cls, pk):
+        'find object by primay key'
         rs = yield from select('%s where `%s`=?' % (cls.__select__, cls.__primary_key__), [pk], 1)
         if len(rs) == 0:
             return None
