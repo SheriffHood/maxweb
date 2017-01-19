@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#-*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-:
 
 import logging; logging.basicConfig(level=logging.INFO)
 
@@ -46,7 +46,7 @@ def logger_factory(app, handler):
     return logger
 
 @asyncio.coroutine
-def data_fatory(app, handler):
+def data_factory(app, handler):
     @asyncio.coroutine
     def parse_data(request):
         if request.method == 'POST':
@@ -85,6 +85,7 @@ def response_factory(app, handler):
                 resp.content_type = 'application/json;charset=utf-8'
                 return resp
             else:
+                r['__user__'] = request.__user__
                 resp = web.Response(body=app['__templating__'].get_template(template).render(**r).encode('utf-8'))
                 resp.content_type = 'text/html;charset=utf-8'
                 return resp
@@ -116,6 +117,7 @@ def auth_factory(app, handler):
         return (yield from handler(request))
     return auth
 
+#前端模板引擎的时间显示过滤器
 def datetime_filter(t):
     delta = int(time.time() - t)
     if delta < 60:
@@ -130,16 +132,23 @@ def datetime_filter(t):
     return u'%s年%s月%s日' % (dt.year, dt.month, dt.day)
 
 @asyncio.coroutine
-def init(request):
+def init(loopi):
+    #创建连接池
     yield from orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='password', db='awesome')
-    app = web.Application(loop=loop, middlewares=[logger_factory, auth_factory, response_factory])
+    #创建服务器实例
+    app = web.Application(loop=loop, middlewares=[logger_factory, auth_factory, data_factory, response_factory])
+    #前端模板引擎
     init_jinja2(app, filters=dict(datetime=datetime_filter))
+    #路由注册
     add_routes(app, 'handlers')
     add_static(app)
+    #在9000端口上创建TCP服务
     srv = yield from loop.create_server(app.make_handler(), '127.0.0.1', 9000)
     logging.info('server started at http://127.0.0.1:9000...')
     return srv
 
+#创建事件循环
 loop = asyncio.get_event_loop()
+#事件循环开始执行
 loop.run_until_complete(init(loop))
 loop.run_forever()

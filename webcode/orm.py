@@ -10,6 +10,7 @@ import aiomysql
 def log(sql, args=()):
     logging.info('SQL: %s' % sql)
 
+#@asyncio.coroutine表示creat_pool是个coroutine
 @asyncio.coroutine
 def create_pool(loop, **kw):
     global __pool
@@ -229,7 +230,7 @@ class Model(dict, metaclass=ModelMetaClass):
     @asyncio.coroutine
     def update(self):
         args = list(map(self.getValue, self.__fields__))
-        args.append(self.getValueOrDefault(self.__primary_key__))
+        args.append(self.getValue(self.__primary_key__))
         rows = yield from execute(self.__update__, args)
         if rows != 1:
             logging.warn('failed to update record by primary key: affected rows: %s' % rows)
