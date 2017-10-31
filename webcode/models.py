@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
+'''
+Date: 2017-10-24
+Author: yuexing
+Keyword: define user, blog and comment class
+'''
+
 import time, uuid
 from orm import Model, StringField, BooleanField, FloatField, TextField
 

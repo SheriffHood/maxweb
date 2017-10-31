@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
+'''
+Date: 2017-10-25
+Author: yuexing
+Keyword: build orm
+'''
+
 import logging
 
 import asyncio
@@ -13,6 +19,7 @@ def log(sql, args=()):
 #@asyncio.coroutine表示creat_pool是个coroutine
 @asyncio.coroutine
 def create_pool(loop, **kw):
+    logging.info('create database connection pool......')
     global __pool
     __pool = yield from aiomysql.create_pool(
         host = kw.get('host', 'localhost'),
@@ -225,7 +232,7 @@ class Model(dict, metaclass=ModelMetaClass):
         args.append(self.getValueOrDefault(self.__primary_key__))
         rows = yield from execute(self.__insert__, args)
         if rows != 1:
-            logging.warn('failed to insert record: affected rows: %s' % rows)
+            logging.warn('fail to insert record: affected rows: %s' % rows)
 
     @asyncio.coroutine
     def update(self):
@@ -233,11 +240,11 @@ class Model(dict, metaclass=ModelMetaClass):
         args.append(self.getValue(self.__primary_key__))
         rows = yield from execute(self.__update__, args)
         if rows != 1:
-            logging.warn('failed to update record by primary key: affected rows: %s' % rows)
+            logging.warn('fail to update record by primary key: affected rows: %s' % rows)
 
     @asyncio.coroutine
     def remove(self):
         args = list(map(self.getValue, self.__primary_key__))
         rows = yield from execute(self.__delete__, args)
         if rows != 1:
-            logging.warn('failed to remove by primary key: affected rows: %s' % rows)
+            logging.warn('fail to remove by primary key: affected rows: %s' % rows)

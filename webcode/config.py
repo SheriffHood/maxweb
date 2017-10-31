@@ -38,12 +38,12 @@ def toDict(d):
         D[k] = toDict(v) if isinstance(v, dict) else v
     return D
 
-configs = config_default.configs
+config = config_default.configs
 
 try:
     import config_override
-    configs = merge(configs, config_override.configs)
+    config = merge(config, config_override.configs)
 except ImportError:
     pass
 
-cofigs = toDict(configs)
+config = toDict(configs)

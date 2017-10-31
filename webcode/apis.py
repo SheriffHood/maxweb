@@ -1,6 +1,12 @@
 #!usr/bin/env python3
 #-*- coding: utf-8 -*-
 
+'''
+Date: 2017-10-23
+Author: yuexing
+Keyword: define bolg show page and exception class
+'''
+
 import json, logging, inspect, functools
 
 class Page(object):

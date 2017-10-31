@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-:
 
-import logging; logging.basicConfig(level=logging.INFO)
+'''
+Date: 2017-10-24
+Author: yuexing
+Keyword: main app file, define middlewares and main function
+'''
 
+import logging; logging.basicConfig(level=logging.INFO)
 import asyncio, os, json, time
 from datetime import datetime   
-
 from aiohttp import web
 from jinja2 import Environment, FileSystemLoader
-
 import orm
 from coroweb import add_routes, add_static
-
 from models import User
-
 from handlers import cookie2user, COOKIE_NAME
 
 def init_jinja2(app, **kw):
@@ -132,7 +133,7 @@ def datetime_filter(t):
     return u'%s年%s月%s日' % (dt.year, dt.month, dt.day)
 
 @asyncio.coroutine
-def init(loopi):
+def init(loop):
     #创建连接池
     yield from orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='password', db='awesome')
     #创建服务器实例
