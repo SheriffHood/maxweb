@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
+'''
+Author: Yuexing
+Date: 2017-11-19
+Keyword: this files define get/post decorator, then define router function
+'''
+
 import asyncio, os, inspect, logging, functools
 
 from urllib import parse
@@ -85,8 +91,7 @@ class RequestHandler(object):
         self._named_kw_args = get_named_kw_args(fn)
         self._required_kw_args = get_required_kw_args(fn)
 
-    @asyncio.coroutine
-    def __call__(self, request):
+    async def __call__(self, request):
         kw = None
         if self._has_var_kw_arg or self._has_named_kw_args or self._required_kw_args:
             if request.method == 'POST':
@@ -94,12 +99,12 @@ class RequestHandler(object):
                     return web.HTTPBadRequest(text='Missing Content-Type.')
                 ct = request.content_type.lower()
                 if ct.startswith('application/json'):
-                    params = yield from request.json()
+                    params = await request.json()
                     if not isinstance(params, dict):
                         return web.HTTPBadRequest('JSON body must be object.')
                     kw = params
                 elif ct.startswith('application/x-www-form-urlencoded') or ct.startswith('multipart/form-data'):
-                    params = yield from request.post()
+                    params = await request.post()
                     kw = dict(**params)
                 else:
                     return web.HTTPBadRequest(text='Unsupported Content-Type: %s' % (request.content_type))
@@ -133,7 +138,7 @@ class RequestHandler(object):
                     return web.HTTPBadRequest(text='Missing argument: %s' % (name))
         logging.info('call with args: %s' % str(kw))
         try:
-            r = yield from self._func(**kw)
+            r = await self._func(**kw)
             return r
         except APIError as e:
             return dict(error=e.error, data=e.data, message=e.message)

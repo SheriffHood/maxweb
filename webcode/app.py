@@ -17,6 +17,7 @@ from coroweb import add_routes, add_static
 from models import User
 from handlers import cookie2user, COOKIE_NAME
 
+#init 模板引擎
 def init_jinja2(app, **kw):
     logging.info('init jinja2......')
     options = dict(
@@ -38,34 +39,31 @@ def init_jinja2(app, **kw):
             env.filters[name] = f
     app['__templating__'] = env
 
-@asyncio.coroutine
-def logger_factory(app, handler):
-    @asyncio.coroutine
-    def logger(request):
+#logger middleware
+async def logger_factory(app, handler):
+    async def logger(request):
         logging.info('Request: %s %s' % (request.method, request.path))
-        return (yield from handler(request))
+        return await handler(request)
     return logger
 
-@asyncio.coroutine
-def data_factory(app, handler):
-    @asyncio.coroutine
-    def parse_data(request):
+#data middleware
+async def data_factory(app, handler):
+    async def parse_data(request):
         if request.method == 'POST':
             if request.content_type.startswith('application/json'):
-                request.__data__ = yield from request.json()
+                request.__data__ = await request.json()
                 logging.info('request json: %s' % str(request.__data__))
             elif request.content_type.startswith('application/x-www-form-urlencoded'):
-                request.__data__ = yield from request.post()
+                request.__data__ = await request.post()
                 logging.info('request form: %s' % str(request.__data__))
-        return (yield from handler(request))
+        return await handler(request)
     return parse_data
 
-@asyncio.coroutine
-def response_factory(app, handler):
-    @asyncio.coroutine
-    def response(request):
+#response middleware
+async def response_factory(app, handler):
+    async def response(request):
         logging.info('reponse handler......')
-        r = yield from handler(request)
+        r = await handler(request)
         if isinstance(r, web.StreamResponse):
             return r
         if isinstance(r, bytes):
@@ -101,21 +99,20 @@ def response_factory(app, handler):
         return resp
     return response
 
-@asyncio.coroutine
-def auth_factory(app, handler):
-    @asyncio.coroutine
-    def auth(request):
+#认证middleware
+async def auth_factory(app, handler):
+    async def auth(request):
         logging.info('checking user: %s %s' % (request.method, request.path))
         request.__user__ = None
         cookie_str = request.cookies.get(COOKIE_NAME)
         if cookie_str:
-            user = yield from cookie2user(cookie_str)
+            user = await cookie2user(cookie_str)
             if user:
                 logging.info('set current user: %s' % user.email)
                 request.__user__ = user
         if request.path.startswith('/manage/') and (request.__user__ is None or not request.__user__.admin):
             return web.HTTPFound('signin')
-        return (yield from handler(request))
+        return await handler(request)
     return auth
 
 #前端模板引擎的时间显示过滤器
@@ -132,10 +129,9 @@ def datetime_filter(t):
     dt = datetime.fromtimestamp(t)
     return u'%s年%s月%s日' % (dt.year, dt.month, dt.day)
 
-@asyncio.coroutine
-def init(loop):
+async def init(loop):
     #创建连接池
-    yield from orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='password', db='awesome')
+    await orm.create_pool(loop=loop, host='127.0.0.1', port=3306, user='root', password='password', db='awesome')
     #创建服务器实例
     app = web.Application(loop=loop, middlewares=[logger_factory, auth_factory, data_factory, response_factory])
     #前端模板引擎
@@ -144,7 +140,7 @@ def init(loop):
     add_routes(app, 'handlers')
     add_static(app)
     #在9000端口上创建TCP服务
-    srv = yield from loop.create_server(app.make_handler(), '127.0.0.1', 9000)
+    srv = await loop.create_server(app.make_handler(), '127.0.0.1', 9000)
     logging.info('server started at http://127.0.0.1:9000...')
     return srv
 

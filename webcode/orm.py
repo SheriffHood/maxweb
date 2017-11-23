@@ -57,15 +57,20 @@ def select(sql, args, size=None):
         return rs
 
 @asyncio.coroutine
-def execute(sql, args):
+def execute(sql, args, autocommit=True):
     log(sql)
     with (yield from __pool) as conn:
+        if not qutocommit:
+            yield from conn.begin()
         try:
-            cur = yield from conn.cursor()
+            with (yield from)conn.cursor(aiomysql.DictCursor) as cur:
             yield from cur.execute(sql.replace('?', '%s'), args)
             affected = cur.rowcount
-            yield from cur.close()
+            if not autocommit:
+                yield from conn.commit()
         except BaseException as e:
+            if not autocommit:
+                yield from conn.rollback()
             raise
         return affected
 
@@ -103,8 +108,7 @@ class FloatField(Field):
         super().__init__(name, 'real', primary_key, default)
 
 class TextField(Field):
-    def __init__(self, name=None, default=None):
-        super().__init__(name, 'text', False, default)
+
 
 class ModelMetaClass(type):
     
