@@ -63,7 +63,7 @@ def execute(sql, args, autocommit=True):
         if not qutocommit:
             yield from conn.begin()
         try:
-            with (yield from)conn.cursor(aiomysql.DictCursor) as cur:
+            cur = yield from conn.cursor()
             yield from cur.execute(sql.replace('?', '%s'), args)
             affected = cur.rowcount
             if not autocommit:
@@ -108,7 +108,8 @@ class FloatField(Field):
         super().__init__(name, 'real', primary_key, default)
 
 class TextField(Field):
-
+    def __init__(self, name=None, default=None):
+        super().__init__(name, 'text', False, default)
 
 class ModelMetaClass(type):
     
