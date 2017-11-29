@@ -60,7 +60,7 @@ def select(sql, args, size=None):
 def execute(sql, args, autocommit=True):
     log(sql)
     with (yield from __pool) as conn:
-        if not qutocommit:
+        if not autocommit:
             yield from conn.begin()
         try:
             cur = yield from conn.cursor()
@@ -198,7 +198,7 @@ class Model(dict, metaclass=ModelMetaClass):
             sql.append('limit')
             if isinstance(limit, int):
                 sql.append('?')
-                sql.append(limit)
+                args.append(limit)
             elif isinstance(limit, tuple) and len(limit) == 2:
                 sql.append('?, ?')
                 args.extend(limit)
@@ -215,7 +215,7 @@ class Model(dict, metaclass=ModelMetaClass):
         if where:
             sql.append('where')
             sql.append(where)
-        rs = yield from select(''.join(sql), args, 1)
+        rs = yield from select(' '.join(sql), args, 1)
         if len(rs) == 0:
             return None
 

@@ -17,7 +17,7 @@ class Dict(dict):
         except KeyError:
             raise AttributeError(r"'Dict' object has no attribute '%s'" % key)
 
-    def __setattr__(self, key):
+    def __setattr__(self, key, value):
         self[key] = value
 
 def merge(defaults, override):
@@ -38,12 +38,12 @@ def toDict(d):
         D[k] = toDict(v) if isinstance(v, dict) else v
     return D
 
-config = config_default.configs
+configs = config_default.configs
 
 try:
     import config_override
-    config = merge(config, config_override.configs)
+    configs = merge(configs, config_override.configs)
 except ImportError:
     pass
 
-config = toDict(configs)
+configs = toDict(configs)
